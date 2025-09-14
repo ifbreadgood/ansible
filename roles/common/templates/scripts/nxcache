@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+tmux new-session \; \
+  split-window -v \; \
+  split-window -v \; \
+  split-window -v \; \
+  split-window -v \; \
+  split-window -h \; \
+  select-pane -t 0 \; send-keys 'tsh ssh ianfritz@cache-nginx-kmc-api-link-apse1-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 1 \; send-keys 'tsh ssh ianfritz@cache-nginx-oh-api-link-use2-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 2 \; send-keys 'tsh ssh ianfritz@cache-nginx-ph-api-link-apse1-mnl1-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 3 \; send-keys 'tsh ssh ianfritz@cache-nginx-ph-wfh-link-apse1-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 4 \; send-keys 'tsh ssh ianfritz@cache-nginx-sg-api-link-apse1-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 5 \; send-keys 'tsh ssh ianfritz@cache-nginx-sg-wfh-link-apse1-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 0 \; \
+  next-layout \; \
+  next-layout
+

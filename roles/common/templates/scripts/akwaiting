@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+tmux new-session \; \
+  split-window -v \; \
+  split-window -v \; \
+  split-window -v \; \
+  select-pane -t 0 \; send-keys 'aws ssm start-session --target i-03a98e4652c841dd3' C-m \; \
+  select-pane -t 1 \; send-keys 'aws ssm start-session --target i-00544fd083523d534' C-m \; \
+  select-pane -t 2 \; send-keys 'aws ssm start-session --target i-0607ec12f1a893c51' C-m \; \
+  select-pane -t 3 \; send-keys 'aws ssm start-session --target i-095a1c36071c2d7dd' C-m \; \
+  select-pane -t 0 \; \
+  next-layout \; \
+  next-layout

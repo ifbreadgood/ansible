@@ -1,0 +1,207 @@
+# vim: filetype=yaml.ansible
+---
+- name: Get kubectl stable version
+  ansible.builtin.uri:
+    url: https://dl.k8s.io/release/stable.txt
+    return_content: true
+  register: latest_kubectl_version
+
+- name: Get current kubectl version
+  shell: "kubectl version --client 2>/dev/null | grep Client | grep -oE 'v[0-9.]+' || echo 0"
+  register: current_kubectl_version
+- name: Install kubectl {{ latest_kubectl_version.content }}
+  become: true
+  ansible.builtin.get_url:
+    url: "https://dl.k8s.io/release/{{ latest_kubectl_version.content }}/bin/linux/amd64/kubectl"
+    dest: /usr/local/bin/kubectl
+    force: true
+    mode: '0755'
+  when: current_kubectl_version.stdout != latest_kubectl_version.content
+
+- name: Get current helm version
+  shell: "helm version --template={% raw %}{{.Version}}{% endraw %} 2>/dev/null || echo 0"
+  register: current_helm_version
+- name: Get latest helm version
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/helm/helm/releases/latest
+    headers:
+      Accept: "application/vnd.github+json"
+      Authorization: "Bearer {{ github_pat }}"
+      X-GitHub-Api-Version: "2022-11-28"
+    return_content: true
+  register: latest_helm_release
+- name: Install helm {{ latest_helm_release.json.tag_name }}
+  vars:
+    download_directory: /tmp/helm_download
+    new_version: "{{ latest_helm_release.json.tag_name }}"
+    old_version: "{{ current_helm_version.stdout }}"
+  when:
+    - not latest_helm_release.json.draft
+    - not latest_helm_release.json.prerelease
+    - new_version != old_version
+  block:
+    - name: Information
+      ansible.builtin.debug:
+        msg: "Updating helm from {{ old_version }} to {{ new_version }}"
+    - name: Prepare
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: directory
+        mode: "0700"
+    - name: Download
+      ansible.builtin.get_url:
+        url: "https://get.helm.sh/helm-{{ new_version }}-linux-amd64.tar.gz"
+        checksum: "sha256:https://get.helm.sh/helm-{{ new_version }}-linux-amd64.tar.gz.sha256sum"
+        dest: /tmp/helm_download/helm.tgz
+        mode: "0700"
+    - name: Extract
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "{{ download_directory }}/helm.tgz"
+        dest: "{{ download_directory }}"
+    - name: Install
+      become: true
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ download_directory }}/linux-amd64/helm"
+        dest: /usr/local/bin/helm
+        mode: '0755'
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: absent
+
+- name: Get current terraform version
+  shell: "terraform version -json 2>/dev/null | jq -r .terraform_version || echo 0"
+  register: current_terraform_version
+- name: Get latest terraform version
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/hashicorp/terraform/releases/latest
+    headers:
+      Accept: "application/vnd.github+json"
+      Authorization: "Bearer {{ github_pat }}"
+      X-GitHub-Api-Version: "2022-11-28"
+    return_content: true
+  register: latest_terraform_release
+- name: Install terraform {{ latest_terraform_release.json.tag_name }}
+  vars:
+    download_directory: /tmp/terraform_download
+    new_version: "{{ latest_terraform_release.json.tag_name[1:] }}"
+    old_version: "{{ current_terraform_version.stdout }}"
+  when:
+    - not latest_terraform_release.json.draft
+    - not latest_terraform_release.json.prerelease
+    - new_version != old_version
+  block:
+    - name: Information
+      ansible.builtin.debug:
+        msg: "Updating vault from {{ old_version }} to {{ new_version }}"
+    - name: Prepare
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: directory
+        mode: "0700"
+    - name: Download
+      ansible.builtin.get_url:
+        url: "https://releases.hashicorp.com/terraform/{{ new_version }}/terraform_{{ new_version }}_linux_amd64.zip"
+        checksum: "sha256:https://releases.hashicorp.com/terraform/{{ new_version }}/terraform_{{ new_version }}_SHA256SUMS"
+        dest: "{{ download_directory }}/terraform.zip"
+        mode: "0700"
+    - name: Extract
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "{{ download_directory }}/terraform.zip"
+        dest: "{{ download_directory }}"
+    - name: Install
+      become: true
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ download_directory }}/terraform"
+        dest: /usr/local/bin/terraform
+        mode: '0755'
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: absent
+
+- name: Get current kind version
+  shell: "kind version | awk '{print $2}' 2>/dev/null || echo 0"
+  register: current_kind_version
+- name: Get latest kind version
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/kubernetes-sigs/kind/releases/latest
+    headers:
+      Accept: "application/vnd.github+json"
+      Authorization: "Bearer {{ github_pat }}"
+      X-GitHub-Api-Version: "2022-11-28"
+    return_content: true
+  register: latest_kind_release
+- name: Install kind {{ latest_kind_release.json.tag_name }}
+  vars:
+    download_directory: /tmp/kind_download
+    new_version: "{{ latest_kind_release.json.tag_name }}"
+    old_version: "{{ current_kind_version.stdout }}"
+  when:
+    - not latest_kind_release.json.draft
+    - not latest_kind_release.json.prerelease
+    - new_version != old_version
+  block:
+    - name: Information
+      ansible.builtin.debug:
+        msg: "Updating kind from {{ old_version }} to {{ new_version }}"
+    - name: Prepare
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: directory
+        mode: "0700"
+    - name: Download
+      become: true
+      ansible.builtin.get_url:
+        url: "https://github.com/kubernetes-sigs/kind/releases/download/{{ new_version }}/kind-linux-amd64"
+        dest: "/usr/local/bin/kind"
+        mode: "0755"
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: absent
+
+- name: Get current talos version
+  shell: " talosctl version --client | grep Tag | awk '{print $2}' 2>/dev/null || echo 0"
+  register: current_talos_version
+- name: Get latest talos version
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/siderolabs/talos/releases/latest
+    headers:
+      Accept: "application/vnd.github+json"
+      Authorization: "Bearer {{ github_pat }}"
+      X-GitHub-Api-Version: "2022-11-28"
+    return_content: true
+  register: latest_talos_release
+- name: Install talos {{ latest_talos_release.json.tag_name }}
+  vars:
+    download_directory: /tmp/talos_download
+    new_version: "{{ latest_talos_release.json.tag_name }}"
+    old_version: "{{ current_talos_version.stdout }}"
+  when:
+    - not latest_talos_release.json.draft
+    - not latest_talos_release.json.prerelease
+    - new_version != old_version
+  block:
+    - name: Information
+      ansible.builtin.debug:
+        msg: "Updating talos from {{ old_version }} to {{ new_version }}"
+    - name: Prepare
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: directory
+        mode: "0700"
+    - name: Download
+      become: true
+      ansible.builtin.get_url:
+        url: "https://github.com/siderolabs/talos/releases/download/{{ new_version }}/talosctl-linux-amd64"
+        dest: "/usr/local/bin/talosctl"
+        mode: "0755"
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: absent

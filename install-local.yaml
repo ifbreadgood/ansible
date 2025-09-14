@@ -1,0 +1,9 @@
+---
+- name: Setup server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    github_pat: "{{lookup('env', 'GITHUB_TOKEN')}}"
+  roles:
+    - name: common

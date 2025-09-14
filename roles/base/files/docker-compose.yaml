@@ -1,0 +1,135 @@
+volumes:
+  adguard-work:
+  adguard-conf:
+#  minio-data:
+  vault-data:
+  keycloak-db:
+  grafana-db:
+  victoria-logs-data:
+  victoria-metrics-data:
+  victoria-metrics-meta:
+
+services:
+  adguard:
+    container_name: adguard
+    image: adguard/adguardhome:v0.107.64
+    restart: always
+    ports:
+      - "53:53/udp"
+    volumes:
+      - adguard-work:/opt/adguardhome/work
+      - adguard-conf:/opt/adguardhome/conf
+
+  haproxy:
+    container_name: haproxy
+    image: haproxy:lts
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./haproxy.cfg:/haproxy.cfg:ro
+      - ./certs/:/certs/:ro
+    command:
+      - -V
+      - -f
+      - /haproxy.cfg
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:26.3
+    restart: always
+    command:
+      - start-dev
+    volumes:
+      - ./certs:/certs/:ro
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: true
+      KC_HTTPS_CERTIFICATE_FILE: /certs/fullchain.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /certs/privkey.pem
+      KC_DB: postgres
+      KC_DB_URL_HOST: keycloak-db
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: rTLavKQWKzPVZluMYBfpWUqQjPVvQGnKdw9zwnHAZqfZUpOwqi
+
+  keycloak-db:
+    container_name: keycloak-db
+    image: postgres:17.5
+    restart: always
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: rTLavKQWKzPVZluMYBfpWUqQjPVvQGnKdw9zwnHAZqfZUpOwqi
+
+  vault:
+    container_name: vault
+    image: hashicorp/vault:1.20
+    restart: always
+    command:
+      - vault
+      - server
+      - -config
+      - /config/vault.hcl
+    volumes:
+      - ./certs:/certs/:ro
+      - ./vault.hcl:/config/vault.hcl
+    cap_add:
+      - IPC_LOCK
+    environment:
+      VAULT_LOG_LEVEL: debug
+      VAULT_RAFT_NODE_ID: vault-1
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:12.1
+    restart: always
+    environment:
+      GF_INSTALL_PLUGINS: victoriametrics-logs-datasource,victoriametrics-metrics-datasource
+
+  grafana-db:
+    container_name: grafana-db
+    image: postgres:17.5
+    restart: always
+    volumes:
+      - grafana-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: grafana
+      POSTGRES_PASSWORD: rTLavKQWKzPVZluMYBfpWUqQjPVvQGnKdw9zwnHAZqfZUpOwqi
+
+  victoria-logs:
+    container_name: victoria-logs
+    image: victoriametrics/victoria-logs:v1.33.1
+    restart: always
+    volumes:
+      - victoria-logs-data:/victoria-logs-data
+    command:
+      - "--storageDataPath=/victoria-logs-data"
+
+  victoria-metrics:
+    container_name: victoria-metrics
+    image: victoriametrics/victoria-metrics:v1.125.1
+    restart: always
+    volumes:
+      - victoria-metrics-data:/victoria-metrics-data
+    command:
+      - "--storageDataPath=/victoria-metrics-data"
+      - "--httpListenAddr=:8428"
+
+#  minio:
+#    container_name: minio
+#    image: minio/minio
+#    command:
+#      - server
+#      - /data
+#      - --console-address
+#      - :9001
+#    restart: always
+#    networks:
+#      ipvlan:
+#        ipv4_address: 10.0.1.196
+#    volumes:
+#      - minio-data:/data
+#    environment:
+#      MINIO_ROOT_USER: minio
+#      MINIO_ROOT_PASSWORD: minio123

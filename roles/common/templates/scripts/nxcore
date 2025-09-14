@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+tmux new-session \; \
+  split-window -v \; \
+  split-window -v \; \
+  split-window -v \; \
+  select-pane -t 0 \; send-keys 'tsh ssh ianfritz@core-nginx-use2-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 1 \; send-keys 'tsh ssh ianfritz@core-nginx-use2-2.prod.letsdowonders.io' C-m \; \
+  select-pane -t 2 \; send-keys 'tsh ssh ianfritz@core-nginx-use2-3.prod.letsdowonders.io' C-m \; \
+  select-pane -t 3 \; send-keys 'tsh ssh ianfritz@core-nginx-use2-4.prod.letsdowonders.io' C-m \; \
+  select-pane -t 0 \; \
+  next-layout \; \
+  next-layout

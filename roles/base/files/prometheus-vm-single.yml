@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: vm-agent
+    static_configs:
+      - targets:
+          - vm-agent:8429
+  - job_name: victoriametrics
+    static_configs:
+      - targets:
+          - vm:8428

@@ -1,0 +1,19 @@
+- name: Install dnf packages
+  become: true
+  ansible.builtin.dnf:
+    disable_gpg_check: true
+    pkg:
+      - awscli
+      - https://s3.amazonaws.com/session-manager-downloads/plugin/latest/linux_64bit/session-manager-plugin.rpm
+
+- name: Setup aws directory
+  ansible.builtin.file:
+    path: "{{ lookup('env', 'HOME') }}/.aws"
+    state: directory
+    mode: "0700"
+
+- name: Setup aws credentials
+  ansible.builtin.copy:
+    src: aws_credentials
+    dest: "{{ lookup('env', 'HOME') }}/.aws/credentials"
+    mode: "0600"

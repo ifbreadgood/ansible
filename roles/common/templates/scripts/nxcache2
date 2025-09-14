@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+tmux new-session \; \
+  split-window -v \; \
+  select-pane -t 0 \; send-keys 'tsh ssh ianfritz@rigel.letsdochinese.com' C-m \; \
+  select-pane -t 1 \; send-keys 'tsh ssh ianfritz@auriga.letsdochinese.com' C-m \; \
+  select-pane -t 0 \; \
+  next-layout \; \
+  next-layout
+

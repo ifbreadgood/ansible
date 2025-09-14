@@ -1,0 +1,30 @@
+- name: Install dnf packages
+  become: true
+  ansible.builtin.dnf:
+    pkg:
+      - zsh
+
+- name: Install oh my zsh
+  ansible.builtin.shell:
+    cmd: 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.oh-my-zsh"
+
+- name: Set user shell to zsh
+  become: true
+  ansible.builtin.user:
+    name: u
+    shell: /usr/bin/zsh
+
+- name: Check if zsh is installed
+  ansible.builtin.stat:
+    path: ~/.zshrc
+  register: zsh
+  tags: shell
+
+- name: Load shell extension to zsh
+  ansible.builtin.lineinfile:
+    line: "source {{ script_directory }}/shell_extension.sh"
+    path: ~/.zshrc
+  when: zsh.stat.exists
+  tags: shell

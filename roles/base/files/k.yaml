@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qq
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vaultes
+spec:
+  type: ClusterIP
+  clusterIP: "None"
+  ports:
+    - port: 443
+      targetPort: 443
+      protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: vaultes  # Must match the service name
+subsets:
+  - addresses:
+      - ip: 10.0.1.193     # Your external service IP
+    ports:
+      - port: 443            # The port on the external service
+---
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: qq
+spec:
+  provider:
+    vault:
+      server: "https://vaultes"
+      path: qq/as
+      version: v2
+      auth:
+        kubernetes:
+          mountPath: kubernetes
+          role: qq
+          serviceAccountRef:
+            name: qq
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: qq
+spec:
+  secretStoreRef:
+    name: qq
+    kind: SecretStore
+  target:
+    name: qq
+  data:
+    - remoteRef:
+        key: as
+        property:  a
+      secretKey:  a
+    - remoteRef:
+        key: as
+        property:  s
+      secretKey:  s

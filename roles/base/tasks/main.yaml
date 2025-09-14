@@ -1,0 +1,17 @@
+---
+- name: Disable systemd-resolved
+  become: true
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: stopped
+    enabled: no
+
+- name: Copy compose
+  ansible.builtin.copy:
+    src: ../files/
+    dest: ./
+
+- name: Start docker
+  community.docker.docker_compose_v2:
+    files: docker-compose.yaml
+    project_src: ./

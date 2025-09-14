@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+CDPATH="{{ workspace_directory }}/personal"
+for dir in "{{ workspace_directory }}"/personal/*; do
+  CDPATH=$CDPATH:$dir
+done
+
+if [[ "$(ls "{{ export_directory }}")" != "" ]]; then
+  for export_file in "{{ export_directory }}"/*; do
+    export "$(echo "$export_file" | awk -F'/' '{print $NF}')"="$(cat "$export_file")"
+  done
+fi
+
+#if [[ "$(ls {{ path_env_directory }})" != "" ]]; then
+#  PATH_EXTENSION=""
+#  for path_env_file in {{ path_env_directory }}/*; do
+#    PATH_EXTENSION=$PATH_EXTENSION:$(cat $path_env_file | envsubst)
+#  done
+#  export PATH=$BASE_PATH$PATH_EXTENSION
+#fi
+
+if [[ "$(ls "{{ alias_directory }}")" != "" ]]; then
+  for alias_file in "{{ alias_directory }}"/*; do
+    source "$alias_file"
+  done
+fi
+
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion

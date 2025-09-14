@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+function end {
+    echo "done"
+}
+trap end EXIT
+
+input=$1
+option="${2:-default}"
+
+mapfile -t entries < <(tsh ls | awk '{print $1}' | grep "$input" | sort)
+if (( ${#entries[@]} == 1 )); then
+    tsh ssh "ianfritz@${entries[0]}"
+else
+    if [[ "${option}" =~ ^[0-9]+$ ]]; then
+        tsh ssh "ianfritz@${entries[$option]}"
+    else
+        for index in "${!entries[@]}"; do
+            echo "$index - ${entries[$index]}"
+        done
+    fi
+fi

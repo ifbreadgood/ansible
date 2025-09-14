@@ -1,0 +1,12 @@
+---
+workspace_directory: "/workspace"
+
+personal_directory: "{{ workspace_directory }}/personal/test"
+work_directory: "{{ workspace_directory }}/work/test"
+
+system_directory: "{{ workspace_directory }}/system"
+alias_directory: "{{ system_directory }}/alias"
+script_directory: "{{ system_directory }}/script"
+export_directory: "{{ system_directory }}/shell/export"
+path_env_directory: "{{ system_directory }}/shell/path_env"
+kube_context_directory: "{{ system_directory }}/kube-contexts"

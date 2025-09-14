@@ -1,0 +1,11 @@
+network:
+  version: 2
+  ethernets:
+    {{ network_interface.user_input }}:
+      addresses:
+        - {{ ip_address.user_input }}
+      nameservers:
+        addresses: [{{ dns_1.user_input }}, {{ dns_2.user_input }}]
+      routes:
+        - to: default
+          via: {{ gateway_address.user_input }}

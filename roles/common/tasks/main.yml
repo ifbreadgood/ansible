@@ -1,0 +1,126 @@
+---
+- name: Install dnf packages
+  become: true
+  ansible.builtin.dnf:
+    pkg:
+      - git
+      - curl
+      - zip
+      - jq
+      - dnsutils
+      - azure-cli
+      - openssl-devel
+      - tmux
+      - wget
+      - luarocks
+      - yt-dlp
+
+- name: Setup aws
+  include_tasks: _aws.yml
+
+- name: Setup zsh
+  include_tasks: _zsh.yml
+
+- name: Setup docker
+  include_tasks: _docker.yml
+
+- name: Setup script directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0700"
+    owner: u
+  with_items:
+    - "{{ script_directory }}"
+    - "{{ alias_directory }}"
+
+- name: Install script templates
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ script_directory }}"
+    mode: "0700"
+  with_fileglob: ../templates/scripts/*
+  tags: shell
+
+- name: Install script files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ script_directory }}"
+    mode: "0700"
+  with_fileglob: ../files/scripts/*
+  tags: shell
+
+- name: Install alias files
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: "{{ alias_directory }}"
+    mode: "0600"
+  with_fileglob: ../templates/alias/*
+  tags: shell
+
+- name: Copy tmux configuration
+  ansible.builtin.copy:
+    src: tmux.conf
+    dest: "{{ lookup('env', 'HOME') }}/.tmux.conf"
+    mode: "0600"
+  tags: shell
+
+- name: Increase host file watchers
+  become: true
+  ansible.builtin.copy:
+    src: 20-inotify.conf
+    dest: /etc/sysctl.d/20-inotify.conf
+    mode: "0644"
+
+- name: Install nvm
+  shell: |
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  args:
+    creates: "{{ lookup('env', 'HOME') }}/.nvm"
+
+- name: Install latest npm and neovim package
+  shell: |
+    source ~/.zshrc
+    nvm install --lts
+    nvm use --lts
+    npm install --global neovim
+
+- name: Install applications
+  ansible.builtin.include_tasks:
+    file: _applications.yaml
+    apply:
+      tags: application
+  tags: application
+
+- name: Install helm repositories
+  kubernetes.core.helm_repository:
+    name: "{{ item.key }}"
+    repo_url: "{{ item.value }}"
+  loop: "{{ list | dict2items }}"
+  vars:
+    list:
+      openebs: https://openebs.github.io/charts
+      grafana: https://grafana.github.io/helm-charts
+      prometheus-community: https://prometheus-community.github.io/helm-charts
+      metallb: https://metallb.github.io/metallb
+      cert-manager: https://charts.jetstack.io
+      sealed-secrets: https://bitnami-labs.github.io/sealed-secrets
+      argo: https://argoproj.github.io/argo-helm
+      dex: https://charts.dexidp.io
+      ingress-nginx: https://kubernetes.github.io/ingress-nginx
+      kubernetes-replicator: https://helm.mittwald.de
+      minio: https://charts.min.io/
+      minio-op: https://operator.min.io/
+      kyverno: https://kyverno.github.io/kyverno/
+      hashicorp: https://helm.releases.hashicorp.com
+      secrets-store-csi-driver: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+      cilium: https://helm.cilium.io/
+      gitea: https://dl.gitea.io/charts/
+      apisix: https://charts.apiseven.com
+      goauthentik: https://charts.goauthentik.io
+      crossplane: https://charts.crossplane.io/stable
+      external-secrets-operator: https://charts.external-secrets.io/
+      metrics-server: https://kubernetes-sigs.github.io/metrics-server
+      deliveryhero: https://charts.deliveryhero.io/
+      cloudnative-pg: https://cloudnative-pg.github.io/charts

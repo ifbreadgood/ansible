@@ -82,14 +82,14 @@ services:
 
   grafana:
     container_name: grafana
-    image: grafana/grafana:12.1
+    image: grafana/grafana:12.2
     restart: always
     environment:
       GF_INSTALL_PLUGINS: victoriametrics-logs-datasource,victoriametrics-metrics-datasource
 
   grafana-db:
     container_name: grafana-db
-    image: postgres:17.5
+    image: postgres:18
     restart: always
     volumes:
       - grafana-db:/var/lib/postgresql/data
@@ -99,7 +99,7 @@ services:
 
   victoria-logs:
     container_name: victoria-logs
-    image: victoriametrics/victoria-logs:v1.33.1
+    image: victoriametrics/victoria-logs:v1.34.0
     restart: always
     volumes:
       - victoria-logs-data:/victoria-logs-data
@@ -108,7 +108,7 @@ services:
 
   victoria-metrics:
     container_name: victoria-metrics
-    image: victoriametrics/victoria-metrics:v1.125.1
+    image: victoriametrics/victoria-metrics:v1.126.0
     restart: always
     volumes:
       - victoria-metrics-data:/victoria-metrics-data

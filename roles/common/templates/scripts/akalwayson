@@ -7,13 +7,13 @@ tmux new-session \; \
   split-window -v \; \
   split-window -h \; \
   split-window -h \; \
-  select-pane -t 0 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-dgt-link-use2-1.prod.letsdowonders.io' C-m \; \
-  select-pane -t 1 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-kmc-link-use2-1.prod.letsdowonders.io' C-m \; \
-  select-pane -t 2 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-oh-link-use2-1.prod.letsdowonders.io' C-m \; \
-  select-pane -t 3 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-ph-link-use2-1.prod.letsdowonders.io' C-m \; \
-  select-pane -t 4 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-ph-wfh-link-use2-1.prod.letsdowonders.io' C-m \; \
-  select-pane -t 5 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-sg-link-use2-1.prod.letsdowonders.io' C-m \; \
-  select-pane -t 6 \; send-keys 'tsh ssh ianfritz@alwayson-asterisk-sg-wfh-link-use2-1.prod.letsdowonders.io' C-m \; \
+  select-pane -t 0 \; send-keys 'aws ssm start-session --target i-037b1099bc3b8a5de' C-m \; \
+  select-pane -t 1 \; send-keys 'aws ssm start-session --target i-0a0c6fb6b3108b1b5' C-m \; \
+  select-pane -t 2 \; send-keys 'aws ssm start-session --target i-0f507cd38b3f64585' C-m \; \
+  select-pane -t 3 \; send-keys 'aws ssm start-session --target i-0000a87e17db234f6' C-m \; \
+  select-pane -t 4 \; send-keys 'aws ssm start-session --target i-0ec5dc7096ff9a031' C-m \; \
+  select-pane -t 5 \; send-keys 'aws ssm start-session --target i-03ca26f0398b07e33' C-m \; \
+  select-pane -t 6 \; send-keys 'aws ssm start-session --target i-06f9b90cf826cb477' C-m \; \
   select-pane -t 0 \; \
   next-layout \; \
   next-layout

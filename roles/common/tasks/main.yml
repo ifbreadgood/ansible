@@ -14,6 +14,7 @@
       - wget
       - luarocks
       - yt-dlp
+      - wl-clipboard
 
 - name: Setup aws
   include_tasks: _aws.yml
@@ -84,7 +85,52 @@
     source ~/.zshrc
     nvm install --lts
     nvm use --lts
-    npm install --global neovim
+    npm install --global neovim \
+      yaml-language-server \
+      bash-language-server \
+      @ansible/ansible-language-server \
+
+- name: Uninstall go
+  ansible.builtin.file:
+    path: /usr/local/go
+    state: absent
+
+# https://go.dev/dl/
+- name: Download go
+  ansible.builtin.get_url:
+    url: "https://go.dev/dl/go1.25.2.linux-amd64.tar.gz"
+    checksum: "sha256:d7fa7f8fbd16263aa2501d681b11f972a5fd8e811f7b10cb9b26d031a3d7454b"
+    dest: /tmp/go.tar.gz
+    mode: "0700"
+
+- name: Install go
+  become: true
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: /tmp/go.tar.gz
+    dest: /usr/local/
+
+- name: Install nvim packages
+  shell: |
+    go install github.com/docker/docker-language-server/cmd/docker-language-server@latest
+
+- name: Install terraform ls
+  ansible.builtin.get_url:
+    url: "https://releases.hashicorp.com/terraform-ls/0.38.2/terraform-ls_0.38.2_linux_amd64.zip"
+    checksum: "sha256:https://releases.hashicorp.com/terraform-ls/0.38.2/terraform-ls_0.38.2_SHA256SUMS"
+    dest: /tmp/tf_ls/tf_ls.zip
+    mode: "0700"
+
+- name: Unarchive terraform ls
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: /tmp/tf_ls/tf_ls.zip
+    dest: /tmp/tf_ls/
+
+- name: Install ansible-lint
+  ansible.builtin.pip:
+    name:
+      - ansible-lint
 
 - name: Install applications
   ansible.builtin.include_tasks:

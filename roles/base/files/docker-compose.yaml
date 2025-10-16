@@ -117,6 +117,7 @@ services:
     command:
       - "--storageDataPath=/victoria-metrics-data"
       - "--httpListenAddr=:8428"
+      - "--maxLabelsPerTimeseries=50"
 
 #  minio:
 #    container_name: minio

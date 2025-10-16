@@ -166,7 +166,7 @@
         state: absent
 
 - name: Get current talos version
-  shell: " talosctl version --client | grep Tag | awk '{print $2}' 2>/dev/null || echo 0"
+  shell: "talosctl version --client | grep Tag | awk '{print $2}' 2>/dev/null || echo 0"
   register: current_talos_version
 - name: Get latest talos version
   ansible.builtin.uri:
@@ -201,6 +201,60 @@
         url: "https://github.com/siderolabs/talos/releases/download/{{ new_version }}/talosctl-linux-amd64"
         dest: "/usr/local/bin/talosctl"
         mode: "0755"
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: absent
+
+- name: Get current lazygit version
+  shell: "lg -v | grep -oE ', version=[0-9.]+' | grep -oE '[0-9.]+' 2>/dev/null || echo 0"
+  register: current_lazygit_version
+- name: Get latest lazygit version
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/jesseduffield/lazygit/releases/latest
+    headers:
+      Accept: "application/vnd.github+json"
+      Authorization: "Bearer {{ github_pat }}"
+      X-GitHub-Api-Version: "2022-11-28"
+    return_content: true
+  register: latest_lazygit_release
+- name: Install lazygit {{ latest_talos_release.json.tag_name }}
+  vars:
+    download_directory: /tmp/lazygit_download
+    new_version: "{{ latest_lazygit_release.json.tag_name[1:] }}"
+    old_version: "{{ current_lazygit_version.stdout }}"
+  when:
+    - not latest_lazygit_release.json.draft
+    - not latest_lazygit_release.json.prerelease
+    - new_version != old_version
+  block:
+    - name: Information
+      ansible.builtin.debug:
+        msg: "Updating lazygit from {{ old_version }} to {{ new_version }}"
+    - name: Prepare
+      ansible.builtin.file:
+        path: "{{ download_directory }}"
+        state: directory
+        mode: "0700"
+    - name: Download
+      become: true
+      ansible.builtin.get_url:
+        url: "https://github.com/jesseduffield/lazygit/releases/download/v{{ new_version }}/lazygit_{{ new_version }}_linux_x86_64.tar.gz"
+        checksum: "sha256:https://github.com/jesseduffield/lazygit/releases/download/v{{ new_version }}/checksums.txt"
+        dest: "{{ download_directory }}/lg.tar.gz"
+        mode: "0755"
+    - name: Extract
+      ansible.builtin.unarchive:
+        remote_src: true
+        src: "{{ download_directory }}/lg.tar.gz"
+        dest: "{{ download_directory }}"
+    - name: Install
+      become: true
+      ansible.builtin.copy:
+        remote_src: true
+        src: "{{ download_directory }}/lazygit"
+        dest: /usr/local/bin/lg
+        mode: '0755'
     - name: Cleanup
       ansible.builtin.file:
         path: "{{ download_directory }}"
